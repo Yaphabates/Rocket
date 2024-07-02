@@ -1,0 +1,6 @@
+{
+    "description": "Template used by llama2.",
+    "prompt_input": "[INST] <<SYS>>\nYou are a helpful assistant. Below is an instruction that describes a task. \nWrite a response that appropriately completes the request.\n<</SYS>>\n\nPlease answer the question by thinking step-by-step.\n{instruction}\n{input}\n [/INST]",
+    "prompt_no_input": "[INST] <<SYS>>\nYou are a helpful assistant. Below is an instruction that describes a task. \nWrite a response that appropriately completes the request.\n<</SYS>>\n\nPlease answer the question by thinking step-by-step.\n{instruction}\n [/INST]",
+    "response_split": "### Response:"    
+}
