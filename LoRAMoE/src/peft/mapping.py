@@ -120,4 +120,5 @@ def get_peft_model(model, peft_config):
     if isinstance(peft_config, PromptLearningConfig):
         peft_config = _prepare_prompt_learning_config(peft_config, model_config)
     # import pdb; pdb.set_trace()
+    # print(peft_config)
     return MODEL_TYPE_TO_PEFT_MODEL_MAPPING[peft_config.task_type](model, peft_config)

@@ -38,8 +38,6 @@ class MMOELoraConfig(LoraConfig):
     """
     This is the configuration class to store the configuration of a [`~peft.MMOELora`]
     """
-    task_num: int = field(default=2, metadata={"help": "The number of tasks."})
-    task_embedding_dim: int = field(default=64)
     expert_num: int = field(default=4)
 
     def __post_init__(self):
@@ -90,8 +88,6 @@ class MMOELoraModel(LoraModel):
             "lora_dropout": lora_config.lora_dropout,
             "fan_in_fan_out": lora_config.fan_in_fan_out,
             "init_lora_weights": lora_config.init_lora_weights,
-            "task_num": lora_config.task_num,
-            "task_embedding_dim": lora_config.task_embedding_dim,
             "expert_num": lora_config.expert_num,
         }
         key_list = [key for key, _ in self.model.named_modules()]   # all module in raw model
@@ -180,9 +176,6 @@ class MMOELoraLayer(LoraLayer):
         
         super().__init__(in_features, out_features)
         self.expert_num = expert_num
-        self.g_lora_A = nn.ModuleDict({})
-        self.g_lora_B = nn.ModuleDict({})
-        self.g_scaling = {}
     
     def update_layer(self, adapter_name, r, lora_alpha, lora_dropout, init_lora_weights):
         self.r[adapter_name] = r
@@ -194,18 +187,12 @@ class MMOELoraLayer(LoraLayer):
 
         self.lora_dropout.update(nn.ModuleDict({adapter_name: lora_dropout_layer}))
         # Actual trainable parameters
-        # import pdb; pdb.set_trace()
         if r > 0:
             self.lora_A.update(nn.ModuleDict({adapter_name: MMOELinearA(self.in_features, r, self.expert_num)}))
             self.lora_B.update(nn.ModuleDict({adapter_name: MMOELinearB(r, self.out_features, self.expert_num)}))
             self.scaling[adapter_name] = lora_alpha / r
         if init_lora_weights:
             self.reset_lora_parameters(adapter_name)
-
-        if adapter_name in self.g_lora_A.keys():
-            # initialize A the same way as the default for nn.Linear and B to zero
-            nn.init.kaiming_uniform_(self.g_lora_A[adapter_name].weight, a=math.sqrt(5))
-            nn.init.zeros_(self.g_lora_B[adapter_name].weight)
 
         self.to(self.weight.device)
     
@@ -241,9 +228,8 @@ class MMOELoraLinear(nn.Linear, MMOELoraLayer):
                                expert_num=self.expert_num)
         
         # init the Gate network
-        # self.lora_task_embedding = nn.ModuleDict({})
+
         self.lora_gate = nn.ModuleDict({})
-        # self.lora_task_embedding.update(nn.ModuleDict({adapter_name: nn.Embedding(self.task_num+1, self.te_dim)}))
         self.lora_gate.update(nn.ModuleDict({adapter_name: Gate(self.in_features, self.expert_num)}))
         
         # Freezing the pre-trained weight matrix
@@ -258,47 +244,47 @@ class MMOELoraLinear(nn.Linear, MMOELoraLayer):
         self.active_adapter = adapter_name
 
 
-    def merge(self, task_id=None):
-        if self.active_adapter not in self.lora_A.keys():
-            return
-        if self.merged:
-            warnings.warn("Already merged. Nothing to do.")
-            return
+    # def merge(self, task_id=None):
+    #     if self.active_adapter not in self.lora_A.keys():
+    #         return
+    #     if self.merged:
+    #         warnings.warn("Already merged. Nothing to do.")
+    #         return
 
-        if self.r[self.active_adapter] > 0:
-            # expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
-            for i in range(self.expert_num):
-                lora_A_weights = self.lora_A[self.active_adapter].loraA[i].mlp.weight
-                lora_B_weights = self.lora_B[self.active_adapter].loraB[i].mlp.weight
-                self.weight.data += (
-                    transpose(
-                        lora_B_weights @ lora_A_weights,
-                        self.fan_in_fan_out,
-                    )
-                    * self.scaling[self.active_adapter]
-                )
-            self.merged = True
+    #     if self.r[self.active_adapter] > 0:
+    #         # expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
+    #         for i in range(self.expert_num):
+    #             lora_A_weights = self.lora_A[self.active_adapter].loraA[i].mlp.weight
+    #             lora_B_weights = self.lora_B[self.active_adapter].loraB[i].mlp.weight
+    #             self.weight.data += (
+    #                 transpose(
+    #                     lora_B_weights @ lora_A_weights,
+    #                     self.fan_in_fan_out,
+    #                 )
+    #                 * self.scaling[self.active_adapter]
+    #             )
+    #         self.merged = True
 
 
-    def unmerge(self, task_id):
-        if self.active_adapter not in self.lora_A.keys():
-            return
-        if not self.merged:
-            warnings.warn("Already unmerged. Nothing to do.")
-            return
-        if self.r[self.active_adapter] > 0:
-            expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
-            for i in range(self.expert_num):
-                lora_A_weights = self.lora_A[self.active_adapter].loraA[i].mlp.weight
-                lora_B_weights = self.lora_B[self.active_adapter].loraB[i].mlp.weight
-                self.weight.data -= (
-                    transpose(
-                        lora_B_weights @ lora_A_weights,
-                        self.fan_in_fan_out,
-                    )
-                    * self.scaling[self.active_adapter]
-                )
-            self.merged = False
+    # def unmerge(self, task_id):
+    #     if self.active_adapter not in self.lora_A.keys():
+    #         return
+    #     if not self.merged:
+    #         warnings.warn("Already unmerged. Nothing to do.")
+    #         return
+    #     if self.r[self.active_adapter] > 0:
+    #         expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
+    #         for i in range(self.expert_num):
+    #             lora_A_weights = self.lora_A[self.active_adapter].loraA[i].mlp.weight
+    #             lora_B_weights = self.lora_B[self.active_adapter].loraB[i].mlp.weight
+    #             self.weight.data -= (
+    #                 transpose(
+    #                     lora_B_weights @ lora_A_weights,
+    #                     self.fan_in_fan_out,
+    #                 )
+    #                 * self.scaling[self.active_adapter]
+    #             )
+    #         self.merged = False
 
     ###### lora moe gate
     def forward(self, hidden_states: torch.Tensor):

@@ -30,7 +30,6 @@ from transformers.modeling_outputs import SequenceClassifierOutput, TokenClassif
 from transformers.utils import PushToHubMixin
 
 from .utils import PeftConfig
-from .shared import Gate, GateN
 
 from .tuners import (
     AdaLoraModel,
@@ -1189,15 +1188,11 @@ class PeftModelForCausalLMShared(PeftModelForCausalLM):
         super().__init__(model, peft_config, adapter_name)
 
         self.expert_num = peft_config.expert_num
-        self.task_num = peft_config.task_num
-        self.te_dim = peft_config.task_embedding_dim
         self.active_adapter = adapter_name
 
-        self.lora_task_embedding = nn.ModuleDict({})
-        self.lora_gate = nn.ModuleDict({})
-        self.lora_task_embedding.update(nn.ModuleDict({adapter_name: nn.Embedding(self.task_num+1, self.te_dim)}))
-        self.lora_gate.update(nn.ModuleDict({adapter_name: Gate(peft_config, adapter_name)}))
-
+        # self.lora_task_embedding = nn.ModuleDict({})
+        # self.lora_gate = nn.ModuleDict({})
+        # self.lora_gate.update(nn.ModuleDict({adapter_name: Gate(peft_config, adapter_name)}))
 
     def forward(self, 
                 input_ids=None, 
@@ -1210,18 +1205,6 @@ class PeftModelForCausalLMShared(PeftModelForCausalLM):
                 **kwargs):
         
         peft_config = self.active_peft_config
-
-        # if kwargs["task_id"] is not None:
-        #     task_id = kwargs["task_id"]
-        #     if len(task_id.shape) < 2:  # one-hot
-        #         expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
-        #     else:   # multi-hot (bs, max_len)
-        #         task_emb = self.lora_task_embedding[self.active_adapter](task_id)   # (bs, max_len, em_dim)
-        #         multi_mask = (task_id>0)   # (bs, max_len)
-        #         task_emb = task_emb * multi_mask.unsqueeze(-1)  # (bs, max_len, em_dim)
-        #         task_emb = torch.sum(task_emb, dim=1) / torch.sum(multi_mask, dim=-1, keepdim=True)    # (bs, em_dim) / (bs, 1) = (bs, em_dim)
-        #         expert_weight = self.lora_gate[self.active_adapter](task_emb) # (bs, 1)
-        #     kwargs["task_id"] = expert_weight
 
         if not isinstance(peft_config, PromptLearningConfig):
             return self.base_model(
@@ -1273,58 +1256,57 @@ class PeftModelForCausalLMShared(PeftModelForCausalLM):
             return self.base_model(inputs_embeds=inputs_embeds, **kwargs)
 
 
-    def generate(self, **kwargs):
-        peft_config = self.active_peft_config
+    # def generate(self, **kwargs):
+    #     peft_config = self.active_peft_config
 
-        if kwargs["task_id"] is not None:
-            task_id = kwargs["task_id"]
-            if len(task_id.shape) < 2:  # one-hot
-                expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
-            else:   # multi-hot (bs, max_len)
-                task_emb = self.lora_task_embedding[self.active_adapter](task_id)   # (bs, max_len, em_dim)
-                multi_mask = (task_id>0)   # (bs, max_len)
-                task_emb = task_emb * multi_mask.unsqueeze(-1)  # (bs, max_len, em_dim)
-                task_emb = torch.sum(task_emb, dim=1) / torch.sum(multi_mask, dim=-1, keepdim=True)    # (bs, em_dim) / (bs, 1) = (bs, em_dim)
-                expert_weight = self.lora_gate[self.active_adapter](task_emb) # (bs, 1)
-            kwargs["task_id"] = expert_weight
+    #     if kwargs["task_id"] is not None:
+    #         task_id = kwargs["task_id"]
+    #         if len(task_id.shape) < 2:  # one-hot
+    #             expert_weight = self.lora_gate[self.active_adapter](self.lora_task_embedding[self.active_adapter](task_id))
+    #         else:   # multi-hot (bs, max_len)
+    #             task_emb = self.lora_task_embedding[self.active_adapter](task_id)   # (bs, max_len, em_dim)
+    #             multi_mask = (task_id>0)   # (bs, max_len)
+    #             task_emb = task_emb * multi_mask.unsqueeze(-1)  # (bs, max_len, em_dim)
+    #             task_emb = torch.sum(task_emb, dim=1) / torch.sum(multi_mask, dim=-1, keepdim=True)    # (bs, em_dim) / (bs, 1) = (bs, em_dim)
+    #             expert_weight = self.lora_gate[self.active_adapter](task_emb) # (bs, 1)
             
-        self.base_model.prepare_inputs_for_generation = self.prepare_inputs_for_generation
-        try:
-            if not isinstance(peft_config, PromptLearningConfig):
-                outputs = self.base_model.generate(**kwargs)
-            else:
-                if "input_ids" not in kwargs:
-                    raise ValueError("input_ids must be provided for Peft model generation")
-                # For gpt2 models, we construct postion_ids on the fly by using attention mask, and position ids need to match input_shape.
-                # for prefix tuning, input shape is determined using `input_ids`. Thus we should not expand 'attention_mask' here
-                # for prompt tuning input_ids is not passed but a concatenated input_embeds is passed. Thus attention_mask needs to be of same size of num_virtual_tokens + input_ids
-                if kwargs.get("attention_mask", None) is not None and peft_config.peft_type in [
-                    PeftType.PROMPT_TUNING,
-                    PeftType.P_TUNING,
-                ]:
-                    # concat prompt attention mask
-                    prefix_attention_mask = torch.ones(
-                        kwargs["input_ids"].shape[0], peft_config.num_virtual_tokens
-                    ).to(kwargs["input_ids"].device)
-                    kwargs["attention_mask"] = torch.cat((prefix_attention_mask, kwargs["attention_mask"]), dim=1)
+    #     self.base_model.prepare_inputs_for_generation = self.prepare_inputs_for_generation
+    #     try:
+    #         if not isinstance(peft_config, PromptLearningConfig):
+    #             outputs = self.base_model.generate(**kwargs)
+    #         else:
+    #             if "input_ids" not in kwargs:
+    #                 raise ValueError("input_ids must be provided for Peft model generation")
+    #             # For gpt2 models, we construct postion_ids on the fly by using attention mask, and position ids need to match input_shape.
+    #             # for prefix tuning, input shape is determined using `input_ids`. Thus we should not expand 'attention_mask' here
+    #             # for prompt tuning input_ids is not passed but a concatenated input_embeds is passed. Thus attention_mask needs to be of same size of num_virtual_tokens + input_ids
+    #             if kwargs.get("attention_mask", None) is not None and peft_config.peft_type in [
+    #                 PeftType.PROMPT_TUNING,
+    #                 PeftType.P_TUNING,
+    #             ]:
+    #                 # concat prompt attention mask
+    #                 prefix_attention_mask = torch.ones(
+    #                     kwargs["input_ids"].shape[0], peft_config.num_virtual_tokens
+    #                 ).to(kwargs["input_ids"].device)
+    #                 kwargs["attention_mask"] = torch.cat((prefix_attention_mask, kwargs["attention_mask"]), dim=1)
 
-                if kwargs.get("position_ids", None) is not None:
-                    warnings.warn(
-                        "Position ids are not supported for parameter efficient tuning. Ignoring position ids."
-                    )
-                    kwargs["position_ids"] = None
-                if kwargs.get("token_type_ids", None) is not None:
-                    warnings.warn(
-                        "Token type ids are not supported for parameter efficient tuning. Ignoring token type ids"
-                    )
-                    kwargs["token_type_ids"] = None
+    #             if kwargs.get("position_ids", None) is not None:
+    #                 warnings.warn(
+    #                     "Position ids are not supported for parameter efficient tuning. Ignoring position ids."
+    #                 )
+    #                 kwargs["position_ids"] = None
+    #             if kwargs.get("token_type_ids", None) is not None:
+    #                 warnings.warn(
+    #                     "Token type ids are not supported for parameter efficient tuning. Ignoring token type ids"
+    #                 )
+    #                 kwargs["token_type_ids"] = None
 
-                outputs = self.base_model.generate(**kwargs)
-        except:
-            self.base_model.prepare_inputs_for_generation = self.base_model_prepare_inputs_for_generation
-            raise
-        else:
-            self.base_model.prepare_inputs_for_generation = self.base_model_prepare_inputs_for_generation
-            return outputs
+    #             outputs = self.base_model.generate(**kwargs)
+    #     except:
+    #         self.base_model.prepare_inputs_for_generation = self.base_model_prepare_inputs_for_generation
+    #         raise
+    #     else:
+    #         self.base_model.prepare_inputs_for_generation = self.base_model_prepare_inputs_for_generation
+    #         return outputs
 
 
