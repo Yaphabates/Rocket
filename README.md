@@ -40,9 +40,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python data_aug.py \
 ```
 
 ## Mixture of Expert Training 
-![Alt text](Figs/MoE.png)
-To train the MoE model, you need to prepare the model, store it in the corresponding path, and run the following script
+<img src="Figs/MoE.png" width="400" height="300">
 
+To train the MoE model, you need to prepare the model, store it in the corresponding path, and run the following script
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --num_gpus=4 finetune.py \
