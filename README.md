@@ -35,6 +35,7 @@ To obtain the result of K-shot evaluation, we use [opencompass](https://github.c
 Data selection requires preparation of: 1) alternative open-source dataset and 2) K-shot data required for the task of interest. By calculating the similarity between open-source data and K-shot data, the most relevant data are extracted, and the data with high similarity are removed.
 
 ```bash
+cd Data_Augmentation
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python data_aug.py \
 --opensource_path Data/commonsense_qa.json \
 --kshot_data_path Data/arc-c_50shot.json \
@@ -46,6 +47,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python data_aug.py \
 To train the MoE model, you need to prepare the model, store it in the corresponding path, and run the following script
 
 ```bash
+cd LoRAMoE
 CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --num_gpus=4 finetune.py \
 --deepspeed "./ds_config_zero3.json" \
 --base_model 'pretrained_models/LLaMa-2-7B' \
