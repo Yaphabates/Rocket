@@ -24,7 +24,6 @@ def similarity(w1, w2):
 import time
 start_time = time.time()
 
-
 similarity_sums = []
 combinations = list(itertools.combinations(model_dir, 4))
 

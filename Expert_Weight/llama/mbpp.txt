@@ -1,0 +1,4 @@
+checkpoints/arc-e_lora_r16/adapter_model.bin
+checkpoints/camel_physics_lora_r16/adapter_model.bin
+checkpoints/camel_chemistry_lora_r16/adapter_model.bin
+checkpoints/boolq_cot_lora_r16/adapter_model.bin

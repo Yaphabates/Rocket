@@ -5,6 +5,16 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModel
 import json
 from scipy.spatial.distance import cdist
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--kshot_data_path', type=str, default="")
+    parser.add_argument('--opensource_path', type=str, default="")
+    parser.add_argument('--target_num', type=int, default=1000)
+    parser.add_argument('--cutoff_len', type=int, default=1024)
+    args = parser.parse_args()
+    return args
 
 class CorpusDataset(Dataset):
     def __init__(self, texts, tokenizer, max_length):
@@ -34,12 +44,13 @@ def remove_close_points(data, threshold):
     remaining_indices = np.delete(np.arange(data.shape[0]), to_remove)
     return remaining_indices
 
-def main():
-    split_num = 1024
-    target_num = 5000
+def main(args):
+    cutoff_len = args.cutoff_len
+    target_num = args.target_num
+
     prefix = "Represent the following sentence for similar task retrieval: "
     text_list = []
-    with open("/apdcephfs_cq8/share_2992827/shennong_5/yunchengyang/Rocket/Data/commonsense_qa.json", 'r') as f:
+    with open(args.opensource_path, 'r') as f:
         data_bank = f.readlines()
         data = []
         for i, d in enumerate(data_bank):
@@ -48,7 +59,7 @@ def main():
             data.append(item)
 
     probe_text_list = []
-    with open("/apdcephfs_cq8/share_2992827/shennong_5/yunchengyang/Rocket/Data/arc-c_50shot.json", 'r') as f:
+    with open(args.kshot_data_path, 'r') as f:
         probe_data = f.readlines()
         for pd in probe_data:
             item = json.loads(pd)
@@ -69,11 +80,11 @@ def main():
     model.eval()
 
 
-    dataset = CorpusDataset(text_list, tokenizer, max_length=split_num)
+    dataset = CorpusDataset(text_list, tokenizer, max_length=cutoff_len)
     dataloader = DataLoader(dataset, batch_size=400, shuffle=False, num_workers=8)
     tbar = tqdm(dataloader)
 
-    probe_dataset = CorpusDataset(probe_text_list, tokenizer, max_length=split_num)
+    probe_dataset = CorpusDataset(probe_text_list, tokenizer, max_length=cutoff_len)
     probe_dataloader = DataLoader(probe_dataset, batch_size=8, shuffle=False, num_workers=8)
     probe_tbar = tqdm(probe_dataloader)
 
@@ -114,4 +125,5 @@ def main():
             f.write(json.dumps(data)+'\n')
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)

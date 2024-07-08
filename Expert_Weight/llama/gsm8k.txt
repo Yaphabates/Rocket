@@ -1,0 +1,4 @@
+checkpoints/gsm8k_lora_r16/adapter_model.bin
+checkpoints/thought-source_lora_r16/adapter_model.bin
+checkpoints/hellaswag_cot_lora_r16/adapter_model.bin
+checkpoints/GPT_Teacher_code_lora_r16/adapter_model.bin

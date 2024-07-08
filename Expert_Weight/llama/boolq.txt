@@ -1,0 +1,4 @@
+checkpoints/winogrande_cot_lora_r16/adapter_model.bin
+checkpoints/race_cot_lora_r16/adapter_model.bin
+checkpoints/aqua_cot_lora_r16/adapter_model.bin
+checkpoints/boolq_cot_lora_r16/adapter_model.bin

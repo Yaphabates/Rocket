@@ -1,12 +1,12 @@
 CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --num_gpus=4 finetune.py \
 --deepspeed "./ds_config_zero3.json" \
---base_model '/apdcephfs_cq8/share_2992827/shennong_5/ianxxu/pretrained_models/LLaMa-2-7B' \
---data_path '/apdcephfs_cq8/share_2992827/shennong_5/yunchengyang/Rocket/Data_Augmentation/arc-c_aug.json' \
+--base_model 'pretrained_models/LLaMa-2-7B' \
+--data_path 'Data_Augmentation/arc-c_aug.json' \
 --output_dir './checkpoints/arc-c' \
 --prompt_template_name 'llama2' \
---num_epochs 3 \
+--num_epochs 5 \
 --cutoff_len 1024 \
 --micro_batch_size 2 \
---load_expert_weight /apdcephfs_cq8/share_2992827/shennong_5/yunchengyang/MOELoRA-peft/expert_weight/llama/arc-c.txt \
+--load_expert_weight expert_weight/llama/arc-c.txt \
 --train_router_only False \
 --lora_type "lora_moe"
