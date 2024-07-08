@@ -40,7 +40,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python data_aug.py \
 ```
 
 ## Mixture of Expert Training 
-<img src="Figs/MoE.png" width="400" height="300">
+<img src="Figs/MoE.png" width="700" height="550">
 
 To train the MoE model, you need to prepare the model, store it in the corresponding path, and run the following script
 
