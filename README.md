@@ -14,6 +14,7 @@ In order to run the model selection script, you need to prepare the following:
 2. LoRA model corresponding to the Base model
 3. Data with answers associated with its CoT process
 
+The LoRA Bank(including all the LoRA models trained on open-source data) is available in [this url](https://drive.google.com/file/d/1jueVxCyln5DL3tHP_d2UiOM7wMMHJxn-/view?usp=sharing)
 
 ```bash
 ### Loss Computation
@@ -59,4 +60,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --num_gpus=4 finetune.py \
 --lora_type "lora_moe"
 ```
 
-You can also download our trained MoE model directly and use [opencompass](https://github.com/open-compass/opencompass) to inference and do evaluation.
+You can also download our trained MoE model in [this url](https://drive.google.com/file/d/1jueVxCyln5DL3tHP_d2UiOM7wMMHJxn-/view?usp=sharing) directly and use [opencompass](https://github.com/open-compass/opencompass) to inference and do evaluation.
