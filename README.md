@@ -1,4 +1,4 @@
-# ROCKET: Harnessing Open-Source Knowledge for Task Augmentation
+# Leveraging Open Knowledge for Advancing Task Expertise in Large Language Models
 
 ## Abstract
 The efficacy of scaling laws in large language models (LLMs) and their subsequent applications underscore the paramount significance of high-quality data in nurturing emerging capabilities. The open-source community contributes to a wealth of both real-world and synthetic datasets, encompassing various fine-tuned LoRA models. Such open resources expedite the development of LLMs for downstream applications even
