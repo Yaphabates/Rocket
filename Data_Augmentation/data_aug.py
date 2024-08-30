@@ -34,25 +34,17 @@ class CorpusDataset(Dataset):
 
 def remove_close_points(data, threshold):
     # cosine distance
-    # import pdb; pdb.set_trace()
     dists = cdist(data, data, 'cosine')
-    close_points = np.where(dists < threshold)
-    # print(close_points[0].shape, data.shape)
     to_remove = []
+
     for i in range(len(data)-1, -1, -1):
         for j in range(i-1, -1, -1):
             if dists[i][j] < threshold:
                 to_remove.append(i)
                 break
-        # if close_points[0][i] != close_points[1][i]:
-        #     if close_points[0][i] > close_points[1][i] and close_points[0][i] not in to_remove:
-        #         to_remove.append(close_points[0][i])
-        #     elif close_points[0][i] < close_points[1][i] and close_points[1][i] not in to_remove:
-        #         to_remove.append(close_points[1][i])
-
+            
     remaining_indices = np.delete(np.arange(data.shape[0]), to_remove)
-    # print(remaining_indices.shape)
-    # import pdb; pdb.set_trace()
+
     return remaining_indices
 
 def main(args):
@@ -130,7 +122,8 @@ def main(args):
 
     data = np.array(data)
     selected_data = data[closest_indices]
-    div_idx = remove_close_points(closest_embeddings, 0.1)
+
+    div_idx = remove_close_points(closest_embeddings, 0.01)
     div_data = selected_data[div_idx].tolist()
 
     with open("arc-c_aug.json", 'w') as f:
