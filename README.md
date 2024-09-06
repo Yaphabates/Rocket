@@ -69,4 +69,28 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --num_gpus=4 finetune.py \
 --lora_type "lora_moe"
 ```
 
-You can also download our trained MoE model in [this url](https://drive.google.com/file/d/1jueVxCyln5DL3tHP_d2UiOM7wMMHJxn-/view?usp=sharing) directly and use [opencompass](https://github.com/open-compass/opencompass) to inference and do evaluation.
+You can also download our trained MoE model in [this url](https://drive.google.com/file/d/1jueVxCyln5DL3tHP_d2UiOM7wMMHJxn-/view?usp=sharing) directly.
+
+## Evaluation
+In our work we use [opencompass](https://github.com/open-compass/opencompass) for inference and evaluation.
+
+### Environment Setup
+  ```bash
+  conda create --name opencompass python=3.10 -y
+  conda activate opencompass
+  git clone https://github.com/open-compass/opencompass 
+  cd opencompass
+  pip install -e .
+  ```
+
+### Data Preparation
+    ```bash
+    wget https://github.com/open-compass/opencompass/releases/download/0.2.2.rc1/OpenCompassData-core-20240207.zip
+    unzip OpenCompassData-core-20240207.zip
+    ```
+
+### Start Evaluation
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python run.py --datasets ARC_c_gen --models hf_mistral_7b.py
+```
