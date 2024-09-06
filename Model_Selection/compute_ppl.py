@@ -34,7 +34,7 @@ def generate(args):
         with open(data_path) as f:
             D = f.readlines()
             
-            out_loss = []
+            out_ppl = []
             batch_num = 0
             items = []
 
@@ -58,8 +58,8 @@ def generate(args):
                 
                 batch = {k: v.cuda() for k, v in batch_dict.items()}
                 outputs = model(**batch)
-                loss = outputs.loss
-                out_loss.append(loss.item())
+                ppl = torch.exp(outputs.loss)
+                out_ppl.append(ppl.item())
                 
                 batch_num += 1
 
@@ -67,7 +67,7 @@ def generate(args):
             for i in range(len(out_loss)):
                 data_dict = {
                     'conversation': items[i],
-                    'loss': out_loss[i]
+                    'ppl': out_ppl[i]
                 }
                 fw.write(json.dumps(data_dict, ensure_ascii=False)+'\n')
             print(args.peft_path, np.mean(out_loss))
