@@ -114,16 +114,14 @@ def main(args):
 
     distance_matrix = cdist(probe_embeddings, embeddings, metric='euclidean')
     average_distances = distance_matrix.mean(axis=0)
-    # import pdb; pdb.set_trace()
     closest_indices = np.argpartition(average_distances, selected_num)[:selected_num]
-    # closest_indices.sort()
     closest_embeddings = embeddings[closest_indices]
 
 
     data = np.array(data)
     selected_data = data[closest_indices]
 
-    div_idx = remove_close_points(closest_embeddings, 0.01)
+    div_idx = remove_close_points(closest_embeddings, 0.1)
     div_data = selected_data[div_idx].tolist()
 
     with open("arc-c_aug.json", 'w') as f:
