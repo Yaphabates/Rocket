@@ -84,10 +84,10 @@ In our work we use [opencompass](https://github.com/open-compass/opencompass) fo
   ```
 
 ### Data Preparation
-    ```bash
-    wget https://github.com/open-compass/opencompass/releases/download/0.2.2.rc1/OpenCompassData-core-20240207.zip
-    unzip OpenCompassData-core-20240207.zip
-    ```
+```bash
+wget https://github.com/open-compass/opencompass/releases/download/0.2.2.rc1/OpenCompassData-core-20240207.zip
+unzip OpenCompassData-core-20240207.zip
+```
 
 ### Start Evaluation
 
