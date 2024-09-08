@@ -94,3 +94,16 @@ unzip OpenCompassData-core-20240207.zip
 ```bash
 CUDA_VISIBLE_DEVICES=0 python run.py --datasets ARC_c_gen --models hf_mistral_7b.py
 ```
+
+## Citation
+```bash
+@misc{yang2024leveragingopenknowledgeadvancing,
+      title={Leveraging Open Knowledge for Advancing Task Expertise in Large Language Models}, 
+      author={Yuncheng Yang and Yulei Qin and Tong Wu and Zihan Xu and Gang Li and Pengcheng Guo and Hang Shao and Yuchen Shi and Ke Li and Xing Sun and Jie Yang and Yun Gu},
+      year={2024},
+      eprint={2408.15915},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2408.15915}, 
+}
+```
